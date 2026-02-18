@@ -182,7 +182,7 @@ st.subheader("🚀 3. Generar y Descargar")
 col_pre, col_gen = st.columns(2, gap="medium")
 
 with col_pre:
-    if st.button("👁️ Vista Previa (Primer Nombre)"):
+    if st.button("👁️ Vista Previa (Primer Estudiante)"):
         if archivo_plantilla and archivo_excel:
             try:
                 df = pd.read_excel(archivo_excel)
@@ -224,4 +224,4 @@ with col_gen:
             except Exception as e:
                 st.error(f"Ocurrió un error durante la generación: {e}")
         else:
-             st.warning("⚠️ Faltan archivos para poder generar el ZIP."))
+             st.warning("⚠️ Faltan archivos para poder generar el ZIP.")
