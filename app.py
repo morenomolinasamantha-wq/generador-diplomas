@@ -6,42 +6,60 @@ import zipfile
 import os
 
 # --- 1. CONFIGURACIÓN Y ESTILO ---
-st.set_page_config(page_title="Generador Pro | Uniagustiniana", layout="wide")
+st.set_page_config(page_title="Generador Pro de Diplomas", layout="wide", page_icon="🎓")
 
-# Inyectamos CSS para que la página sea única (interés en Web Development)
+# Inyectamos CSS para fuentes personalizadas y estilo único
 st.markdown("""
     <style>
-    /* Color de fondo y tipografía general */
+    /* Importamos una fuente moderna de Google Fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+    /* Aplicamos la fuente a toda la aplicación */
+    html, body, [class*="css"] {
+        font-family: 'Poppins', sans-serif;
+    }
+
+    /* Color de fondo principal más limpio */
     .main {
-        background-color: #f5f7f9;
+        background-color: #f8f9fa;
     }
+
     /* Estilo para los títulos */
-    h1 {
-        color: #002d55;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    h1, h2, h3 {
+        color: #2c3e50; /* Un azul oscuro elegante */
+        font-weight: 600;
         text-align: center;
-        padding-bottom: 20px;
     }
-    /* Personalización de botones */
+
+    /* Personalización de botones con un degradado sutil */
     .stButton>button {
         width: 100%;
-        border-radius: 10px;
+        border-radius: 12px;
         height: 3em;
-        background-color: #002d55;
+        background: linear-gradient(to right, #3498db, #2c3e50); /* Degradado azul */
         color: white;
         border: none;
-        transition: 0.3s;
+        font-weight: 500;
+        transition: 0.3s ease-in-out;
     }
     .stButton>button:hover {
-        background-color: #c41e3a;
-        color: white;
-        border: none;
+        background: linear-gradient(to right, #2c3e50, #3498db); /* Invertir degradado al pasar el mouse */
+        transform: translateY(-2px); /* Pequeño efecto de elevación */
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
-    /* Contenedores de opciones */
+
+    /* Contenedores de opciones (Expander) con sombra suave */
     .stExpander {
         background-color: white;
-        border: 1px solid #e0e0e0;
-        border-radius: 10px;
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    
+    /* Personalizar la barra lateral */
+    [data-testid="stSidebar"] {
+        background-color: #ffffff;
+        border-right: 1px solid #eee;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -79,57 +97,73 @@ def generar_diploma(imagen_plantilla, datos_estudiante, textos_fijos, config_dis
     return img
 
 # --- 3. INTERFAZ DE USUARIO ---
-st.title("🎓 Sistema Institucional de Certificación")
+st.title("🎓 Sistema de Certificación Digital")
+st.markdown("---") # Línea separadora sutil
 
 if not os.path.exists(ARCHIVO_FUENTE_LOCAL):
-    st.error(f"❌ Error crítico: No se encontró '{ARCHIVO_FUENTE_LOCAL}' en el servidor.")
+    st.error(f"❌ Error crítico: No se encontró '{ARCHIVO_FUENTE_LOCAL}' en el servidor. Asegúrate de subirlo a GitHub.")
 
-# Barra lateral para textos que no cambian por estudiante
+# Barra lateral
 with st.sidebar:
-    st.image("https://www.uniagustiniana.edu.co/sites/default/files/logo-uniagustiniana.png", width=200) # Opcional: logo si tienes link
-    st.header("⚙️ Configuración Global")
+    # --- SECCIÓN PARA TU LOGO ---
+    # 1. Sube tu archivo de logo (ej. "mi_logo.png") a GitHub igual que subiste los otros archivos.
+    # 2. Cambia el nombre "logo_placeholder.png" por el nombre exacto de tu archivo.
+    logo_archivo = "logo_placeholder.png" # <-- ¡CAMBIA ESTO POR EL NOMBRE DE TU LOGO!
+    
+    if os.path.exists(logo_archivo):
+        st.image(logo_archivo, width=180)
+    else:
+        # Si no has subido logo, muestra un texto o un logo genérico de internet
+        st.header("🌟 Tu Marca Aquí") 
+        st.info(f"Sube una imagen llamada '{logo_archivo}' a GitHub para verla aquí.")
+
+    st.markdown("---")
+    st.header("⚙️ Configuración del Evento")
     txt_intro = st.text_input("Frase de Introducción", "Por haber participado y aprobado el:")
-    txt_curso = st.text_area("Nombre del Curso / Evento", "DIPLOMADO EN GESTIÓN EDUCATIVA")
-    txt_horas = st.text_input("Intensidad y Fecha", "Intensidad: 120 Horas | Bogotá D.C.")
-    txt_prefijo_id = st.text_input("Texto antes del número (ID)", "C.C.")
+    txt_curso = st.text_area("Nombre del Curso / Evento", "CURSO DE EJEMPLO")
+    txt_horas = st.text_input("Intensidad y Fecha", "Intensidad: X Horas | Ciudad, Fecha")
+    txt_prefijo_id = st.text_input("Texto antes del número (ID)", "Doc. Identidad:")
 
 # Diseño principal en columnas
 col_archivos, col_ajustes = st.columns([1, 1.5], gap="large")
 
 with col_archivos:
-    st.subheader("📂 Carga de Archivos")
-    archivo_plantilla = st.file_uploader("1. Imagen de Fondo (Plantilla)", type=["jpg", "png"])
-    archivo_excel = st.file_uploader("2. Listado de Estudiantes (Excel)", type=["xlsx"])
-    st.info("El Excel debe tener columnas: 'Nombres' e 'Identificacion'")
+    st.subheader("📂 1. Carga de Archivos")
+    st.markdown("Sube la plantilla base y el listado de personas.")
+    archivo_plantilla = st.file_uploader("Imagen de Fondo (Plantilla)", type=["jpg", "png"])
+    archivo_excel = st.file_uploader("Listado de Estudiantes (Excel)", type=["xlsx"])
+    if not archivo_excel:
+        st.info("💡 El Excel debe tener columnas llamadas: **'Nombres'** e **'Identificacion'**.")
 
 with col_ajustes:
-    st.subheader("🎨 Ajustes de Posición")
+    st.subheader("🎨 2. Personalización del Diseño")
+    st.markdown("Ajusta la posición y tamaño de los textos sobre la plantilla.")
     
-    with st.expander("👤 Estilo del Nombre e Identificación", expanded=True):
+    with st.expander("👤 Nombres e Identificación", expanded=True):
         c1, c2, c3 = st.columns(3)
         tam_nombre = c1.slider("Tamaño Nombre", 50, 400, 160)
-        y_nombre = c2.slider("Altura Nombre (Y)", 0, 2000, 600)
-        col_nombre = c3.color_picker("Color Nombre", "#000000")
+        y_nombre = c2.slider("Posición Vertical (Y)", 0, 2000, 600)
+        col_nombre = c3.color_picker("Color", "#000000", key="c_nom")
         
+        st.divider()
         c4, c5, c6 = st.columns(3)
-        tam_id = c4.slider("Tamaño Cédula", 20, 200, 50)
-        y_id = c5.slider("Altura Cédula (Y)", 0, 2000, 700)
-        col_id = c6.color_picker("Color Cédula", "#444444")
+        tam_id = c4.slider("Tamaño ID", 20, 200, 50)
+        y_id = c5.slider("Posición Vertical (Y)", 0, 2000, 750)
+        col_id = c6.color_picker("Color", "#555555", key="c_id")
 
-    with st.expander("✍️ Estilo del Motivo y Curso"):
+    with st.expander("📝 Textos del Evento (Curso, Horas)"):
+        col_textos = st.color_picker("Color para todos estos textos", "#2c3e50")
         c1, c2 = st.columns(2)
         tam_intro = c1.slider("Tamaño Intro", 20, 150, 45)
-        y_intro = c2.slider("Altura Intro (Y)", 0, 2000, 850)
+        y_intro = c2.slider("Posición Y", 0, 2000, 900)
         
         c3, c4 = st.columns(2)
         tam_curso = c3.slider("Tamaño Curso", 30, 250, 90)
-        y_curso = c4.slider("Altura Curso (Y)", 0, 2000, 1000)
+        y_curso = c4.slider("Posición Y", 0, 2000, 1050)
         
         c5, c6 = st.columns(2)
         tam_horas = c5.slider("Tamaño Horas", 20, 120, 35)
-        y_horas = c6.slider("Altura Horas (Y)", 0, 2000, 1150)
-        
-        col_textos = st.color_picker("Color de textos adicionales", "#002d55")
+        y_horas = c6.slider("Posición Y", 0, 2000, 1200)
 
 # Empaquetamos configuraciones
 config_diseño = {
@@ -141,40 +175,53 @@ config_diseño = {
 }
 textos_fijos = {'motivo_intro': txt_intro, 'curso': txt_curso, 'horas': txt_horas}
 
-st.divider()
+st.markdown("---")
 
 # --- 4. ACCIONES ---
-col_pre, col_gen = st.columns(2)
+st.subheader("🚀 3. Generar y Descargar")
+col_pre, col_gen = st.columns(2, gap="medium")
 
 with col_pre:
-    if st.button("👁️ Ver Vista Previa"):
+    if st.button("👁️ Vista Previa (Primer Nombre)"):
         if archivo_plantilla and archivo_excel:
-            df = pd.read_excel(archivo_excel)
-            df['Identificacion'] = df['Identificacion'].astype(str)
-            fila = df.iloc[0]
-            datos_preview = {'nombre': str(fila["Nombres"]), 'id': str(fila["Identificacion"])}
-            
-            img = generar_diploma(archivo_plantilla, datos_preview, textos_fijos, config_diseño)
-            st.image(img, use_container_width=True)
+            try:
+                df = pd.read_excel(archivo_excel)
+                df['Identificacion'] = df['Identificacion'].astype(str)
+                fila = df.iloc[0]
+                datos_preview = {'nombre': str(fila["Nombres"]), 'id': str(fila["Identificacion"])}
+                
+                img = generar_diploma(archivo_plantilla, datos_preview, textos_fijos, config_diseño)
+                st.image(img, caption="Así se verá el primer diploma", use_container_width=True)
+                st.success("¡Vista previa generada con éxito!")
+            except Exception as e:
+                 st.error(f"Error al leer archivos: {e}. Revisa que el Excel tenga las columnas correctas.")
         else:
-            st.warning("⚠️ Sube los archivos primero.")
+            st.warning("⚠️ Por favor, sube primero la plantilla y el Excel.")
 
 with col_gen:
-    if st.button("🚀 Generar y Descargar Todo (ZIP)"):
+    st.markdown("Cuando la vista previa esté perfecta, genera todos los diplomas.")
+    if st.button("✨ Generar Todos los Diplomas (ZIP)"):
         if archivo_plantilla and archivo_excel:
-            df = pd.read_excel(archivo_excel)
-            df['Identificacion'] = df['Identificacion'].astype(str)
-            zip_buffer = io.BytesIO()
-            bar = st.progress(0)
-            
-            with zipfile.ZipFile(zip_buffer, "w") as zf:
-                for i, row in df.iterrows():
-                    datos = {'nombre': str(row["Nombres"]), 'id': str(row["Identificacion"])}
-                    img = generar_diploma(archivo_plantilla, datos, textos_fijos, config_diseño)
-                    b = io.BytesIO()
-                    img.save(b, format="PDF")
-                    zf.writestr(f"Diploma_{datos['nombre']}.pdf", b.getvalue())
-                    bar.progress((i+1)/len(df))
-            
-            st.success("✅ ¡Proceso completado!")
-            st.download_button("📥 Descargar Archivo ZIP", zip_buffer.getvalue(), "diplomas.zip", "application/zip")
+            try:
+                df = pd.read_excel(archivo_excel)
+                df['Identificacion'] = df['Identificacion'].astype(str)
+                zip_buffer = io.BytesIO()
+                bar_progreso = st.progress(0, text="Iniciando...")
+                
+                with zipfile.ZipFile(zip_buffer, "w") as zf:
+                    total = len(df)
+                    for i, row in df.iterrows():
+                        datos = {'nombre': str(row["Nombres"]), 'id': str(row["Identificacion"])}
+                        img = generar_diploma(archivo_plantilla, datos, textos_fijos, config_diseño)
+                        b = io.BytesIO()
+                        img.save(b, format="PDF")
+                        zf.writestr(f"Diploma_{datos['nombre']}.pdf", b.getvalue())
+                        bar_progreso.progress((i+1)/total, text=f"Procesando {i+1} de {total}...")
+                
+                bar_progreso.empty()
+                st.success(f"✅ ¡{total} diplomas generados correctamente!")
+                st.download_button("📥 Descargar Archivo ZIP", zip_buffer.getvalue(), "diplomas_generados.zip", "application/zip", type="primary")
+            except Exception as e:
+                st.error(f"Ocurrió un error durante la generación: {e}")
+        else:
+             st.warning("⚠️ Faltan archivos para poder generar el ZIP."))
