@@ -104,14 +104,14 @@ col1, col2 = st.columns([1, 1.5], gap="large")
 with col1:
     st.subheader("1. Archivos")
     plantilla = st.file_uploader("Subir Plantilla (Imagen)", type=["jpg", "png", "jpeg"])
-    excel = st.file_uploader("Subir Excel Estudiantes", type=["xlsx"])
+    excel = st.file_uploader("Subir Excel", type=["xlsx"])
     if not excel:
         st.caption("El Excel debe tener columnas: 'Nombres' e 'Identificacion'")
 
 with col2:
     st.subheader("2. Diseño y Posición")
-    print ("hola soy perro")
-
+    st.caption("hola soy dog")
+   
     
     with st.expander("👤 Ajustar Nombre e Identificación", expanded=True):
         c1, c2 = st.columns(2)
