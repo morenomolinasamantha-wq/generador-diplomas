@@ -110,6 +110,7 @@ with col1:
 
 with col2:
     st.subheader("2. Diseño y Posición")
+    txt_intro = st.text_input("Aquí puedes ajustar el tamaño y la altura del texto. (Podras verlo en la vista previa):")
     
     with st.expander("👤 Ajustar Nombre e Identificación", expanded=True):
         c1, c2 = st.columns(2)
