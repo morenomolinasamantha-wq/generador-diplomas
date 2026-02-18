@@ -5,7 +5,48 @@ import io
 import zipfile
 import os
 
-# --- CONFIGURACIÓN ---
+# --- 1. CONFIGURACIÓN Y ESTILO ---
+st.set_page_config(page_title="Generador Pro | Uniagustiniana", layout="wide")
+
+# Inyectamos CSS para que la página sea única (interés en Web Development)
+st.markdown("""
+    <style>
+    /* Color de fondo y tipografía general */
+    .main {
+        background-color: #f5f7f9;
+    }
+    /* Estilo para los títulos */
+    h1 {
+        color: #002d55;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        text-align: center;
+        padding-bottom: 20px;
+    }
+    /* Personalización de botones */
+    .stButton>button {
+        width: 100%;
+        border-radius: 10px;
+        height: 3em;
+        background-color: #002d55;
+        color: white;
+        border: none;
+        transition: 0.3s;
+    }
+    .stButton>button:hover {
+        background-color: #c41e3a;
+        color: white;
+        border: none;
+    }
+    /* Contenedores de opciones */
+    .stExpander {
+        background-color: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+# --- 2. LÓGICA DE PROCESAMIENTO ---
 ARCHIVO_FUENTE_LOCAL = "fuente.ttf" 
 
 def generar_diploma(imagen_plantilla, datos_estudiante, textos_fijos, config_diseño):
@@ -13,153 +54,127 @@ def generar_diploma(imagen_plantilla, datos_estudiante, textos_fijos, config_dis
     draw = ImageDraw.Draw(img)
     W, H = img.size
 
-    # Intentamos cargar la fuente
-    try:
-        # Cargamos la fuente una vez para usarla en todo
-        fuente_base = ARCHIVO_FUENTE_LOCAL
-    except:
-        st.error(f"⚠️ NO ENCUENTRO EL ARCHIVO '{ARCHIVO_FUENTE_LOCAL}'.")
-        return img
-
-    # --- FUNCIÓN AYUDANTE PARA DIBUJAR CADA LÍNEA ---
-    def dibujar_linea(texto, tamaño, color, pos_y_offset):
+    def dibujar_linea(texto, tamaño, color, pos_y):
         if not texto: return
         try:
-            font = ImageFont.truetype(fuente_base, tamaño)
+            font = ImageFont.truetype(ARCHIVO_FUENTE_LOCAL, tamaño)
         except:
             font = ImageFont.load_default()
             
         bbox = draw.textbbox((0, 0), str(texto), font=font)
         w_texto = bbox[2] - bbox[0]
         pos_x = (W - w_texto) / 2
-        draw.text((pos_x, pos_y_offset), str(texto), font=font, fill=color)
+        draw.text((pos_x, pos_y), str(texto), font=font, fill=color)
 
-    # 1. NOMBRE (Del Excel)
+    # Dibujamos cada elemento según el diseño
     dibujar_linea(datos_estudiante['nombre'], config_diseño['tam_nombre'], config_diseño['col_nombre'], config_diseño['y_nombre'])
-
-    # 2. IDENTIFICACIÓN (Del Excel) - Se suele poner "C.C. " antes del número
+    
     texto_id = f"{config_diseño['prefijo_id']} {datos_estudiante['id']}"
     dibujar_linea(texto_id, config_diseño['tam_id'], config_diseño['col_id'], config_diseño['y_id'])
-
-    # 3. TEXTO MOTIVO (Ej: "Participó en el curso de")
+    
     dibujar_linea(textos_fijos['motivo_intro'], config_diseño['tam_intro'], config_diseño['col_intro'], config_diseño['y_intro'])
-
-    # 4. NOMBRE DEL CURSO (Ej: "PYTHON PARA TODOS")
     dibujar_linea(textos_fijos['curso'], config_diseño['tam_curso'], config_diseño['col_curso'], config_diseño['y_curso'])
-
-    # 5. HORAS (Ej: "Intensidad de 40 horas")
     dibujar_linea(textos_fijos['horas'], config_diseño['tam_horas'], config_diseño['col_horas'], config_diseño['y_horas'])
 
     return img
 
-# --- INTERFAZ ---
-st.set_page_config(page_title="Generador de Diplomas Pro", layout="wide")
-st.title("🎓 Generador de Diplomas - Multilínea")
+# --- 3. INTERFAZ DE USUARIO ---
+st.title("🎓 Sistema Institucional de Certificación")
 
-# Verificación inicial
 if not os.path.exists(ARCHIVO_FUENTE_LOCAL):
-    st.warning(f"🚨 FALTANTE: No veo el archivo '{ARCHIVO_FUENTE_LOCAL}' en la carpeta.")
+    st.error(f"❌ Error crítico: No se encontró '{ARCHIVO_FUENTE_LOCAL}' en el servidor.")
 
-# --- BARRA LATERAL (DATOS FIJOS) ---
+# Barra lateral para textos que no cambian por estudiante
 with st.sidebar:
-    st.header("📝 Datos del Diploma")
-    txt_intro = st.text_input("1. Texto Intro", "Participó y aprobó el curso de:")
-    txt_curso = st.text_input("2. Nombre del Curso", "INTELIGENCIA ARTIFICIAL")
-    txt_horas = st.text_input("3. Horas/Fecha", "Duración: 40 Horas - Agosto 2025")
-    txt_prefijo_id = st.text_input("Prefijo ID", "C.C.", help="Lo que va antes del número")
+    st.image("https://www.uniagustiniana.edu.co/sites/default/files/logo-uniagustiniana.png", width=200) # Opcional: logo si tienes link
+    st.header("⚙️ Configuración Global")
+    txt_intro = st.text_input("Frase de Introducción", "Por haber participado y aprobado el:")
+    txt_curso = st.text_area("Nombre del Curso / Evento", "DIPLOMADO EN GESTIÓN EDUCATIVA")
+    txt_horas = st.text_input("Intensidad y Fecha", "Intensidad: 120 Horas | Bogotá D.C.")
+    txt_prefijo_id = st.text_input("Texto antes del número (ID)", "C.C.")
 
-# --- ÁREA PRINCIPAL ---
-col_izq, col_der = st.columns([1, 2], gap="large")
+# Diseño principal en columnas
+col_archivos, col_ajustes = st.columns([1, 1.5], gap="large")
 
-with col_izq:
-    st.subheader("📂 Archivos")
-    archivo_plantilla = st.file_uploader("Subir Plantilla (Imagen)", type=["jpg", "png"])
-    archivo_excel = st.file_uploader("Subir Excel (con Nombres e Identificacion)", type=["xlsx"])
+with col_archivos:
+    st.subheader("📂 Carga de Archivos")
+    archivo_plantilla = st.file_uploader("1. Imagen de Fondo (Plantilla)", type=["jpg", "png"])
+    archivo_excel = st.file_uploader("2. Listado de Estudiantes (Excel)", type=["xlsx"])
+    st.info("El Excel debe tener columnas: 'Nombres' e 'Identificacion'")
 
-with col_der:
-    st.subheader("🎨 Diseño y Posiciones")
-    st.info("Ajusta el tamaño y la altura (Y) de cada elemento.")
+with col_ajustes:
+    st.subheader("🎨 Ajustes de Posición")
     
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(["👤 Nombre", "🆔 ID", "✍️ Intro", "🎓 Curso", "⏰ Horas"])
+    with st.expander("👤 Estilo del Nombre e Identificación", expanded=True):
+        c1, c2, c3 = st.columns(3)
+        tam_nombre = c1.slider("Tamaño Nombre", 50, 400, 160)
+        y_nombre = c2.slider("Altura Nombre (Y)", 0, 2000, 600)
+        col_nombre = c3.color_picker("Color Nombre", "#000000")
+        
+        c4, c5, c6 = st.columns(3)
+        tam_id = c4.slider("Tamaño Cédula", 20, 200, 50)
+        y_id = c5.slider("Altura Cédula (Y)", 0, 2000, 700)
+        col_id = c6.color_picker("Color Cédula", "#444444")
 
-    with tab1:
+    with st.expander("✍️ Estilo del Motivo y Curso"):
         c1, c2 = st.columns(2)
-        tam_nombre = c1.slider("Tamaño Nombre", 50, 300, 150)
-        y_nombre = c2.slider("Altura Nombre (Y)", 0, 1500, 500)
-        col_nombre = st.color_picker("Color Nombre", "#000000")
-    
-    with tab2:
-        c1, c2 = st.columns(2)
-        tam_id = c1.slider("Tamaño ID", 20, 150, 60)
-        y_id = c2.slider("Altura ID (Y)", 0, 1500, 650)
-        col_id = st.color_picker("Color ID", "#555555")
+        tam_intro = c1.slider("Tamaño Intro", 20, 150, 45)
+        y_intro = c2.slider("Altura Intro (Y)", 0, 2000, 850)
+        
+        c3, c4 = st.columns(2)
+        tam_curso = c3.slider("Tamaño Curso", 30, 250, 90)
+        y_curso = c4.slider("Altura Curso (Y)", 0, 2000, 1000)
+        
+        c5, c6 = st.columns(2)
+        tam_horas = c5.slider("Tamaño Horas", 20, 120, 35)
+        y_horas = c6.slider("Altura Horas (Y)", 0, 2000, 1150)
+        
+        col_textos = st.color_picker("Color de textos adicionales", "#002d55")
 
-    with tab3: # Intro (Motivo)
-        c1, c2 = st.columns(2)
-        tam_intro = c1.slider("Tamaño Intro", 20, 150, 50)
-        y_intro = c2.slider("Altura Intro (Y)", 0, 1500, 750)
-        col_intro = st.color_picker("Color Intro", "#555555")
-
-    with tab4: # Curso
-        c1, c2 = st.columns(2)
-        tam_curso = c1.slider("Tamaño Curso", 40, 300, 100)
-        y_curso = c2.slider("Altura Curso (Y)", 0, 1500, 850)
-        col_curso = st.color_picker("Color Curso", "#003366")
-
-    with tab5: # Horas
-        c1, c2 = st.columns(2)
-        tam_horas = c1.slider("Tamaño Horas", 20, 150, 40)
-        y_horas = c2.slider("Altura Horas (Y)", 0, 1500, 1000)
-        col_horas = st.color_picker("Color Horas", "#555555")
-
-# --- EMPAQUETAR CONFIGURACIÓN ---
+# Empaquetamos configuraciones
 config_diseño = {
     'tam_nombre': tam_nombre, 'y_nombre': y_nombre, 'col_nombre': col_nombre,
     'tam_id': tam_id, 'y_id': y_id, 'col_id': col_id, 'prefijo_id': txt_prefijo_id,
-    'tam_intro': tam_intro, 'y_intro': y_intro, 'col_intro': col_intro,
-    'tam_curso': tam_curso, 'y_curso': y_curso, 'col_curso': col_curso,
-    'tam_horas': tam_horas, 'y_horas': y_horas, 'col_horas': col_horas
+    'tam_intro': tam_intro, 'y_intro': y_intro, 'col_intro': col_textos,
+    'tam_curso': tam_curso, 'y_curso': y_curso, 'col_curso': col_textos,
+    'tam_horas': tam_horas, 'y_horas': y_horas, 'col_horas': col_textos
 }
 textos_fijos = {'motivo_intro': txt_intro, 'curso': txt_curso, 'horas': txt_horas}
 
 st.divider()
 
-# --- BOTONES DE ACCIÓN ---
-if st.button("👁️‍🗨️ Vista Previa (Primer estudiante)"):
-    if archivo_plantilla and archivo_excel:
-        df = pd.read_excel(archivo_excel)
-        # Convertimos a string para evitar errores con números
-        df['Identificacion'] = df['Identificacion'].astype(str)
-        
-        if "Nombres" in df.columns and "Identificacion" in df.columns:
+# --- 4. ACCIONES ---
+col_pre, col_gen = st.columns(2)
+
+with col_pre:
+    if st.button("👁️ Ver Vista Previa"):
+        if archivo_plantilla and archivo_excel:
+            df = pd.read_excel(archivo_excel)
+            df['Identificacion'] = df['Identificacion'].astype(str)
             fila = df.iloc[0]
             datos_preview = {'nombre': str(fila["Nombres"]), 'id': str(fila["Identificacion"])}
             
             img = generar_diploma(archivo_plantilla, datos_preview, textos_fijos, config_diseño)
-            st.image(img, caption="Así se verá el diploma")
+            st.image(img, use_container_width=True)
         else:
-            st.error("❌ El Excel debe tener columnas: 'Nombres' e 'Identificacion'")
-    else:
-        st.warning("Sube la plantilla y el Excel para ver la prueba.")
+            st.warning("⚠️ Sube los archivos primero.")
 
-if st.button("🚀 Generar Todos"):
-    if archivo_plantilla and archivo_excel:
-        df = pd.read_excel(archivo_excel)
-        df['Identificacion'] = df['Identificacion'].astype(str) # Importante
-        
-        if "Nombres" in df.columns and "Identificacion" in df.columns:
+with col_gen:
+    if st.button("🚀 Generar y Descargar Todo (ZIP)"):
+        if archivo_plantilla and archivo_excel:
+            df = pd.read_excel(archivo_excel)
+            df['Identificacion'] = df['Identificacion'].astype(str)
             zip_buffer = io.BytesIO()
-            progreso = st.progress(0)
+            bar = st.progress(0)
             
             with zipfile.ZipFile(zip_buffer, "w") as zf:
                 for i, row in df.iterrows():
                     datos = {'nombre': str(row["Nombres"]), 'id': str(row["Identificacion"])}
                     img = generar_diploma(archivo_plantilla, datos, textos_fijos, config_diseño)
-                    
                     b = io.BytesIO()
                     img.save(b, format="PDF")
                     zf.writestr(f"Diploma_{datos['nombre']}.pdf", b.getvalue())
-                    progreso.progress((i+1)/len(df))
+                    bar.progress((i+1)/len(df))
             
-            st.success("¡Diplomas listos!")
-            st.download_button("Descargar ZIP", zip_buffer.getvalue(), "diplomas_completos.zip", "application/zip")
+            st.success("✅ ¡Proceso completado!")
+            st.download_button("📥 Descargar Archivo ZIP", zip_buffer.getvalue(), "diplomas.zip", "application/zip")
