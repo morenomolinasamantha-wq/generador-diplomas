@@ -110,7 +110,7 @@ with col1:
 
 with col2:
     st.subheader("2. Diseño y Posición")
-    st.caption("hola soy dog")
+    st.caption("En este espaciado se ajusta el tamaño y la altura del texto. (Se podra observar en vista previa lo cambios realizados)")
    
     
     with st.expander("👤 Ajustar Nombre e Identificación", expanded=True):
