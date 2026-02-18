@@ -110,6 +110,7 @@ with col1:
 
 with col2:
     st.subheader("2. Diseño y Posición")
+    print ("hola soy perro")
 
     
     with st.expander("👤 Ajustar Nombre e Identificación", expanded=True):
