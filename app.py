@@ -8,7 +8,7 @@ import os
 # --- 1. CONFIGURACIÓN ---
 st.set_page_config(page_title="Generador de Diplomas", layout="wide", page_icon="🎓")
 
-# --- 2. ESTILO (Solo colores y botones) ---
+# --- 2. ESTILO (Tus modificaciones intactas) ---
 st.markdown("""
     <style>
     /* Fondo con un degradado suave y profesional */
@@ -48,10 +48,9 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 3. FUNCIONES ---
-ARCHIVO_FUENTE_LOCAL = "fuente.ttf" 
+# --- 3. FUNCIONES (Actualizada para recibir la fuente) ---
 
-def generar_diploma(imagen_plantilla, datos_estudiante, textos_fijos, config_diseño):
+def generar_diploma(imagen_plantilla, datos_estudiante, textos_fijos, config_diseño, archivo_fuente):
     img = Image.open(imagen_plantilla).convert("RGB")
     draw = ImageDraw.Draw(img)
     W, H = img.size
@@ -59,8 +58,10 @@ def generar_diploma(imagen_plantilla, datos_estudiante, textos_fijos, config_dis
     def dibujar_linea(texto, tamaño, color, pos_y):
         if not texto: return
         try:
-            font = ImageFont.truetype(ARCHIVO_FUENTE_LOCAL, tamaño)
+            # Aquí usamos la fuente que el usuario eligió
+            font = ImageFont.truetype(archivo_fuente, tamaño)
         except:
+            # Si no encuentra el archivo, usa la de defecto para no romper la app
             font = ImageFont.load_default()
             
         bbox = draw.textbbox((0, 0), str(texto), font=font)
@@ -81,7 +82,6 @@ def generar_diploma(imagen_plantilla, datos_estudiante, textos_fijos, config_dis
 
 # --- 4. INTERFAZ ---
 
-# Título directo, sin imagen encima
 st.title("🎓 Generador de Certificados Premium")
 st.markdown("---")
 
@@ -93,6 +93,22 @@ with st.sidebar:
         st.info("Sube 'mi_logo.png' a GitHub.")
 
     st.header("⚙️ Configuración Texto")
+    
+    # --- NUEVO: Selector de Fuente ---
+    tipo_letra = st.selectbox(
+        "🔤 Elige la Tipografía",
+        ["Clásica (Original)", "Manuscrita (Elegante)", "Moderna (Bloque)"]
+    )
+    
+    # Mapeo de la selección al archivo real
+    if tipo_letra == "Clásica (Original)":
+        archivo_fuente_actual = "fuente.ttf"
+    elif tipo_letra == "Manuscrita (Elegante)":
+        archivo_fuente_actual = "cursiva.ttf"
+    else:
+        archivo_fuente_actual = "moderna.ttf"
+    # ---------------------------------
+
     txt_intro = st.text_input("Introducción", "Por haber participado y aprobado el:")
     txt_curso = st.text_area("Nombre del Curso", "DIPLOMADO EN GESTIÓN")
     txt_horas = st.text_input("Detalles / Horas", "Intensidad: 120 Horas")
@@ -110,8 +126,7 @@ with col1:
 
 with col2:
     st.subheader("2. Diseño y Posición")
-    st.caption("En este espaciado se ajusta el tamaño y la altura del texto. (Se podra observar en vista previa lo cambios realizados)")
-   
+    st.caption("En este espaciado se ajusta el tamaño y la altura del texto. (Se podrá observar en vista previa lo cambios realizados)")
     
     with st.expander("👤 Ajustar Nombre e Identificación", expanded=True):
         c1, c2 = st.columns(2)
@@ -154,7 +169,8 @@ with c_btn1:
                 primero = df.iloc[0]
                 datos = {'nombre': str(primero["Nombres"]), 'id': str(primero["Identificacion"])}
                 
-                img_prev = generar_diploma(plantilla, datos, textos, config)
+                # Pasamos 'archivo_fuente_actual' a la función
+                img_prev = generar_diploma(plantilla, datos, textos, config, archivo_fuente_actual)
                 st.image(img_prev, caption="Ejemplo del primer estudiante", use_container_width=True)
             except Exception as e:
                 st.error(f"Error leyendo el Excel: {e}")
@@ -172,7 +188,8 @@ with c_btn2:
                 total = len(df)
                 for i, row in df.iterrows():
                     datos = {'nombre': str(row["Nombres"]), 'id': str(row["Identificacion"])}
-                    img = generar_diploma(plantilla, datos, textos, config)
+                    # Pasamos 'archivo_fuente_actual' a la función
+                    img = generar_diploma(plantilla, datos, textos, config, archivo_fuente_actual)
                     
                     pdf_bytes = io.BytesIO()
                     img.save(pdf_bytes, format="PDF")
